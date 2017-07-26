@@ -87,7 +87,6 @@ module.exports.loop = function () {
     } else {
         harvesterX = 8;
     }
-
     let minerX = 2;
     let builderX = 4;
     let upgraderX = 2;
@@ -108,7 +107,6 @@ module.exports.loop = function () {
     // console.log("isOneMiningSideFree: "+ (isOneMiningSideFree) +" spawnEnergy > 600: "+ (spawnEnergy > 600));
 // console.log(!spawn1.spawning);
     if (harvesters.length < harvesterX) {
-
         let targets = spawn1.room.find(FIND_SOURCES);
         let newName = Game.spawns['Spawn1'].createCreep([WORK, WORK, CARRY, MOVE], undefined, {
             role: 'harvester',
@@ -304,7 +302,7 @@ module.exports.loop = function () {
         }
 
     }
-}
+};
 // }
 // catch (e) {
 //     console.loo("Error in you Main: " + e);

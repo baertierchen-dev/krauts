@@ -1,4 +1,3 @@
-const utilCommon = require('utils.common');
 let guarding;
 
 let roleGuard = {
@@ -24,6 +23,7 @@ let roleGuard = {
             if (closestHostileWithAttack) {
                 console.log("Guard: " + creep.name + " found closest hostile: " + closestHostileWithAttack.owner);
             }
+
             if (guarding === undefined)
                 guarding = false;
 
@@ -45,10 +45,9 @@ let roleGuard = {
                             guarding = true;
                         }
                     } else {
-
                         if (closestHostile[0]) {
                             creep.say("Go Away!");
-                            Game.notify("Tower shoot at Hostile " + closestHostile[0].owner.username);
+                            Game.notify("Guard Attacked Hostile " + closestHostile[0].owner.username);
                             if (creep.attack(closestHostile[0]) === ERR_NOT_IN_RANGE) {
                                 creep.moveTo(closestHostile[0]);
                             }
