@@ -19,15 +19,19 @@ let roleHarvester = {
                 this.work(creep);
             }
         } catch (e) {
-            console.log(e);
+            console.log(e.stack);
         }
     },
     work: function (creep) {
-
+                // if(creep.room.controller) {
+                //     if(creep.signController(creep.room.controller, "I like this room.") == ERR_NOT_IN_RANGE) {
+                //         creep.moveTo(creep.room.controller);
+                //     }
+                // }
         // if (creep.fatigue > 0) {
         //     utilCommon.setRoad(creep.pos)
         // }
-
+        // creep.signController(creep.room.controller, "I like this room.");
         let spawnEnergy = utilCommon.getAmountOfEnergyForSpawn(creep.room);
         // creep.say("Hello!")
         // if (creep.fatigue > 0){

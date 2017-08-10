@@ -7,6 +7,7 @@ const roleCarrier = require('role.carrier');
 const roleClaimer = require('role.claimer');
 const roleGuard = require('role.guard');
 const roleSwarm = require('role.swarm');
+const roleScout = require('role.scout');
 
 const buildingTower = require('building.tower');
 const utilCommon = require('utils.common');
@@ -16,6 +17,8 @@ let spawn1 = Game.spawns['Spawn1'];
 let count;
 // try {
 module.exports.loop = function () {
+
+
 
     // if (!utilCommon.waitForTicks(10)) {
     //     if (Game.time % 2)
@@ -33,14 +36,19 @@ module.exports.loop = function () {
 
     let spawnEnergy = utilCommon.getAmountOfEnergyForSpawn(room);
     if (false) {
-        // Memory.flags = {};
-        let flags = Game.rooms['E5S8'].find(FIND_FLAGS);
+        Memory.flags = {};
+        let flags = room.find(FIND_FLAGS);
         flags.forEach((flag) => {
             // Memory.flags[flag.name] = {};
             Memory.flags[flag.name] = flag;
             // Memory.flags[flag.name].usedBy = {}
         });
     }
+
+    // if (Game.time % 1000 === 0) {
+    //     utilCommon.checkMiners();
+    //     utilCommon.che();
+    // }
 
     let name;
     let tower;
@@ -53,15 +61,21 @@ module.exports.loop = function () {
             room.controller.activateSafeMode();
         }
     } catch (e) {
-        console.log("Error in Safe Mod Try" + e);
+        console.log("Error in Safe Mod Try" + e.stack);
     }
 
-    for (name in Memory.creeps) {
-        if (!Game.creeps[name]) {
-            delete Memory.creeps[name];
-            // console.log('Clearing non-existing creep memory:', name);
+    if(Game.time % 5 === 0){
+        utilCommon.checkForFalslyUsedFlag();
+        for (name in Memory.creeps) {
+            if (!Game.creeps[name]) {
+                delete Memory.creeps[name];
+                // console.log('Clearing non-existing creep memory:', name);
+            }
         }
     }
+
+
+    let isNotSpawning = spawn1.spawning === null;
 
     let harvesters = _.filter(Game.creeps, (creep) => creep.memory.role === 'harvester');
     let miners = _.filter(Game.creeps, (creep) => creep.memory.role === 'miner');
@@ -71,7 +85,7 @@ module.exports.loop = function () {
     let claimers = _.filter(Game.creeps, (creep) => creep.memory.role === 'claimer');
     let guards = _.filter(Game.creeps, (creep) => creep.memory.role === 'guard');
     let swarms = _.filter(Game.creeps, (creep) => creep.memory.role === 'swarm');
-    let towers = spawn1.room.find(FIND_STRUCTURES, {
+    let towers = room.find(FIND_STRUCTURES, {
         filter: structure => {
             return structure.structureType === STRUCTURE_TOWER
         }
@@ -82,24 +96,27 @@ module.exports.loop = function () {
     //helpers for Spawning
     let constructionSides = room.find(FIND_CONSTRUCTION_SITES);
     let harvesterX;
-    if (miners.length > 0) {
-        harvesterX = 4;
+    if (miners.length > 1) {
+        harvesterX = 2;
     } else {
-        harvesterX = 8;
+        harvesterX = 5;
     }
 
     let minerX = 2;
-    let builderX = 4;
+    let builderX = 2;
     let upgraderX = 2;
     let enoughHarvester = (harvesters.length > (harvesterX - 2));
     let enougMiner = (miners.length > 0);
     /* ############### MINER ################*/
     let isOneMiningSideFree = utilCommon.freeMiningSide()[0];
+    // let isOneMiningSideFree = false;
     let miningSide = utilCommon.freeMiningSide()[1];
-
+    let isOneMiningSideWithContainer = utilCommon.checkForContainerAtMiningSide(miningSide.name);
+// console.log(miningSide)
 
     /* ############### CARRIER ################*/
     let isOneCarryableFree = utilCommon.findCarryableMiningSide()[0];
+    // let isOneCarryableFree = false;
     let carrySide = utilCommon.findCarryableMiningSide()[1];
     // console.log(Game.time % 10===0);
 
@@ -108,7 +125,6 @@ module.exports.loop = function () {
     // console.log("isOneMiningSideFree: "+ (isOneMiningSideFree) +" spawnEnergy > 600: "+ (spawnEnergy > 600));
 // console.log(!spawn1.spawning);
     if (harvesters.length < harvesterX) {
-
         let targets = spawn1.room.find(FIND_SOURCES);
         let newName = Game.spawns['Spawn1'].createCreep([WORK, WORK, CARRY, MOVE], undefined, {
             role: 'harvester',
@@ -117,16 +133,22 @@ module.exports.loop = function () {
         });
         if (!(newName < 0))
             console.log('Spawning new harvester: ' + newName);
-
     }
-    if (enoughHarvester && isOneMiningSideFree && spawnEnergy > 600) {
+    if (enoughHarvester && isOneMiningSideFree && isOneMiningSideWithContainer && spawnEnergy > 600 && isNotSpawning) {
         let newName = Game.spawns['Spawn1'].createCreep([WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE], undefined, {
             role: 'miner',
             targetName: miningSide.name
         });
         if (!(newName < 0))
             console.log('Spawning new big miner: ' + newName);
-    } else if (enoughHarvester && isOneMiningSideFree) {
+    } else if (enoughHarvester && isOneMiningSideFree&& isOneMiningSideWithContainer && spawnEnergy > 549 &&isNotSpawning) {
+        let newName = Game.spawns['Spawn1'].createCreep([MOVE, MOVE, WORK, WORK, WORK, WORK, CARRY], undefined, {
+            role: 'miner',
+            targetName: miningSide.name
+        });
+        if (!(newName < 0))
+            console.log('Spawning new medium miner: ' + newName);
+    } else if (enoughHarvester && isOneMiningSideFree && isOneMiningSideWithContainer && isNotSpawning) {
         let newName = Game.spawns['Spawn1'].createCreep([WORK, WORK, CARRY, MOVE], undefined, {
             role: 'miner',
             targetName: miningSide.name
@@ -134,7 +156,11 @@ module.exports.loop = function () {
         if (!(newName < 0))
             console.log('Spawning new miner: ' + newName);
     }
-    if (!isOneMiningSideFree && isOneCarryableFree && spawnEnergy > 1100 && enoughHarvester && true) {
+
+    if (!isOneMiningSideFree && isOneCarryableFree && spawnEnergy > 1200 && enoughHarvester && true
+        && utilCommon.notEnoughCarrier()
+        && isNotSpawning
+    ) {
         let newName = Game.spawns['Spawn1'].createCreep([
             CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
             CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
@@ -147,8 +173,21 @@ module.exports.loop = function () {
         });
         if (!(newName < 0))
             console.log('Spawning new big carrier: ' + newName);
-    } else if (!isOneMiningSideFree && isOneCarryableFree && enoughHarvester && true) {
-        let newName = Game.spawns['Spawn1'].createCreep([CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE], undefined, {
+    } else if (!isOneMiningSideFree && isOneCarryableFree && spawnEnergy > 549 && enoughHarvester && true
+        && utilCommon.notEnoughCarrier()
+        && isNotSpawning
+    ) {
+        let newName = Game.spawns['Spawn1'].createCreep([MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY], undefined, {
+            role: 'carrier',
+            targetName: carrySide.name
+        });
+        if (!(newName < 0))
+            console.log('Spawning new medium carrier: ' + newName);
+    } else if (!isOneMiningSideFree && isOneCarryableFree && enoughHarvester && true
+        && utilCommon.notEnoughCarrier()
+        && isNotSpawning
+    ) {
+        let newName = Game.spawns['Spawn1'].createCreep([CARRY, CARRY, CARRY, CARRY, MOVE, MOVE], undefined, {
             role: 'carrier',
             targetName: carrySide.name
         });
@@ -164,11 +203,10 @@ module.exports.loop = function () {
             ((!isOneCarryableFree && !isOneMiningSideFree)) + " " + ((builders.length < builderX) + " " + (enoughHarvester) + " " + (constructionSides.length > 0)) +
             "\nupgrader: " +
             (!isOneCarryableFree && !isOneMiningSideFree) + " " + (upgraders.length < upgraderX) + " " + (enoughHarvester) +
-            "\nHealer: " +
-            (!isOneCarryableFree && !isOneMiningSideFree) + " " + (healers.length < 2) + " " + (enoughHarvester));
+            "\nHealer: " + (!spawn1.spawning) + " " + (!isOneCarryableFree && !isOneMiningSideFree) + " " + (healers.length < 1) + " " + enoughHarvester + " " + (spawnEnergy > 549));
     }
 
-    if (!isOneCarryableFree && !isOneMiningSideFree && builders.length < builderX && enoughHarvester && constructionSides.length > 0 && spawnEnergy > 600) {
+    if (!isOneCarryableFree && !isOneMiningSideFree && builders.length < builderX && enoughHarvester && constructionSides.length > 0 && spawnEnergy > 600 && isNotSpawning) {
         let newName = Game.spawns['Spawn1'].createCreep([WORK, WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE, MOVE], undefined, {role: 'builder'});
         if (!(newName < 0))
             console.log('Spawning new Big builder: ' + newName);
@@ -182,7 +220,9 @@ module.exports.loop = function () {
             }
 
         }
-    }else if(!isOneCarryableFree && !isOneMiningSideFree && builders.length < builderX && enoughHarvester && constructionSides.length > 0) {
+    } else if (
+        // !isOneCarryableFree && !isOneMiningSideFree &&
+    builders.length < builderX && enoughHarvester && constructionSides.length > 0 && isNotSpawning) {
         let newName = Game.spawns['Spawn1'].createCreep([WORK, CARRY, MOVE], undefined, {
             role: 'builder'
         });
@@ -190,19 +230,38 @@ module.exports.loop = function () {
             console.log('Spawning new builder: ' + newName);
     }
 
-    if (!spawn1.spawning && !isOneCarryableFree && !isOneMiningSideFree && upgraders.length < upgraderX && enoughHarvester) {
+
+    if (isNotSpawning&&
+        // !isOneCarryableFree && !isOneMiningSideFree &&
+        upgraders.length < upgraderX && enoughHarvester && spawnEnergy > 799 && true) {
+        let newName = Game.spawns['Spawn1'].createCreep([MOVE,MOVE,MOVE,MOVE,WORK,WORK,WORK,WORK,WORK,CARRY,CARRY], undefined, {role: 'upgrader'});
+        if (!(newName < 0))
+            console.log('Spawning new BIG upgrader: ' + newName);
+    } else if (isNotSpawning &&
+        // !isOneCarryableFree && !isOneMiningSideFree &&
+        upgraders.length < upgraderX && enoughHarvester && spawnEnergy > 549 && true) {
+        let newName = Game.spawns['Spawn1'].createCreep([MOVE, MOVE, CARRY, WORK, WORK, WORK], undefined, {role: 'upgrader'});
+        if (!(newName < 0))
+            console.log('Spawning new Medium upgrader: ' + newName);
+    } else if (isNotSpawning &&
+        // !isOneCarryableFree && !isOneMiningSideFree &&
+        upgraders.length < upgraderX && enoughHarvester) {
         let newName = Game.spawns['Spawn1'].createCreep([WORK, WORK, CARRY, MOVE], undefined, {role: 'upgrader'});
         if (!(newName < 0))
             console.log('Spawning new upgrader: ' + newName);
     }
 
-    if (!spawn1.spawning && !isOneCarryableFree && !isOneMiningSideFree && healers.length < 2 && enoughHarvester) {
+    if (isNotSpawning && !isOneCarryableFree && !isOneMiningSideFree && healers.length < 1 && enoughHarvester && spawnEnergy > 549) {
+        let newName = Game.spawns['Spawn1'].createCreep([MOVE, MOVE, MOVE, WORK, WORK, CARRY, CARRY, CARRY, CARRY], undefined, {role: 'healer'});
+        if (!(newName < 0))
+            console.log('Spawning new healer: ' + newName);
+    } else if (isNotSpawning && !isOneCarryableFree && !isOneMiningSideFree && healers.length < 1 && enoughHarvester && true) {
         let newName = Game.spawns['Spawn1'].createCreep([WORK, WORK, CARRY, MOVE], undefined, {role: 'healer'});
         if (!(newName < 0))
             console.log('Spawning new healer: ' + newName);
     }
 
-    if(!spawn1.spawning && !isOneCarryableFree && !isOneMiningSideFree && claimers.length < 1 && enoughHarvester && spawnEnergy > 800 && false) {
+    if (isNotSpawning && !isOneCarryableFree && !isOneMiningSideFree && claimers.length < 1 && enoughHarvester && spawnEnergy > 800 && false) {
         let newName = Game.spawns['Spawn1'].createCreep([CLAIM, MOVE], undefined, {
             role: 'claimer',
             target: ''
@@ -211,14 +270,14 @@ module.exports.loop = function () {
             console.log('Spawning new claimer: ' + newName);
     }
 
-    if (guards.length < 3 && enoughHarvester && spawnEnergy > 510 && false) {
+    if (isNotSpawning && guards.length < 1 && enoughHarvester && spawnEnergy > 510 && true) {
         let newName = Game.spawns['Spawn1'].createCreep([ATTACK, ATTACK, ATTACK, ATTACK, MOVE, MOVE, MOVE, MOVE], undefined, {
             role: 'guard',
             target: ''
         });
         if (!(newName < 0))
             console.log('Spawning new big guard: ' + newName);
-    } else if (!spawn1.spawning && guards.length < 3 && enoughHarvester && false) {
+    } else if (isNotSpawning && guards.length < 1 && enoughHarvester && true) {
         let newName = Game.spawns['Spawn1'].createCreep([ATTACK, ATTACK, MOVE, MOVE], undefined, {
             role: 'guard',
             target: ''
@@ -227,14 +286,14 @@ module.exports.loop = function () {
             console.log('Spawning new guard: ' + newName);
     }
 
-    if (swarms.length < 3 && enoughHarvester && spawnEnergy > 510 && false) {
+    if (isNotSpawning && swarms.length < 3 && enoughHarvester && spawnEnergy > 510 && false) {
         let newName = Game.spawns['Spawn1'].createCreep([RANGED_ATTACK, RANGED_ATTACK, MOVE, MOVE], undefined, {
             role: 'swarm',
             target: ''
         });
         if (!(newName < 0))
             console.log('Spawning new big swarm: ' + newName);
-    } else if (swarms.length < 3 && enoughHarvester && false) {
+    } else if (isNotSpawning && swarms.length < 3 && enoughHarvester && false) {
         let newName = Game.spawns['Spawn1'].createCreep([RANGED_ATTACK, MOVE], undefined, {
             role: 'swarm',
             target: ''
@@ -297,6 +356,10 @@ module.exports.loop = function () {
             }
             if (creep.memory.role === 'swarm') {
                 roleSwarm.run(creep);
+            }
+            if (creep.memory.role === 'scout') {
+
+                roleScout.run(creep);
             }
             if (creep.memory.role === undefined) {
                 creep.suicide()

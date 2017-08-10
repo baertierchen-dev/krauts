@@ -4,20 +4,13 @@ let roleMiner = {
 
     /** @param {Creep} creep **/
     run: function (creep) {
-        let carry;
-        // TODO: 18.07.2017 - @jkue - Implement me
         const hostiles = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 4);
         if (hostiles.length > 0) {
             creep.say('Oh My God!!😨');
             creep.moveTo(Game.spawns['Spawn1']);
         }
-        else {
-            if (carry === undefined) {
-                carry = false;
-            }
-            // console.log(creep)
+        else
             this.work(creep);
-        }
     },
     work: function (creep) {
         let miningFlag = Game.flags[creep.memory.targetName];
@@ -28,14 +21,12 @@ let roleMiner = {
         // console.log("cpawning? " + creep.spawning + " targetName? " + creep.memory.targetName)
         // + " targetName? " + creep.memory.targetName == undefined);
         if (creep.spawning) {
-            utilCommon.setMiningSideAsUsed(creep.memory.targetName);
+            utilCommon.setMiningSideAsUsed(creep.name,creep.memory.targetName);
 // /**/            console.log("Creep Target Name: " + creep.memory.targetName);
 
         }
-
-        if (creep.ticksToLive < 3 || creep.hits < creep.hitsMax) {
+        if (creep.ticksToLive < 2 || creep.hits < creep.hitsMax) {
             utilCommon.deleteMeOutOfMiningSide(creep.memory.targetName);
-
         }
 
         //Get nearest free Mining-Side

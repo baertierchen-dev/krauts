@@ -16,9 +16,9 @@ try {
     module.exports.loop = function () {
         let room = Game.spawns['Spawn1'].room;
         let spawnEnergy = utilCommon.getAmountOfEnergyForSpawn(room);
-        if (Memory.flags == null) {
+        if (true) {
             Memory.flags = {};
-            let flags = Game.rooms['E5S8'].find(FIND_FLAGS);
+            let flags = room.find(FIND_FLAGS);
             flags.forEach((flag) => {
                 // Memory.flags[flag.name] = {};
                 Memory.flags[flag.name] = flag;

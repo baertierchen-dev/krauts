@@ -19,7 +19,7 @@ let roleCarrier = {
                 this.work(creep);
             }
         } catch (e) {
-            console.log(e);
+            console.log(e.stack);
         }
 //         /**
 //         let carrying;
@@ -143,7 +143,7 @@ let roleCarrier = {
         let CarryableFlag = Game.flags[creep.memory.targetName];
 
         if (creep.spawning) {
-            utilCommon.setCarryableMiningSideAsUsed(creep.memory.targetName);
+            utilCommon.setCarryableMiningSideAsUsed(creep.name, creep.memory.targetName);
             // console.log("Creep Target Name: " + creep.memory.targetName);
 
         }
@@ -213,6 +213,24 @@ let roleCarrier = {
                         return structure.structureType === STRUCTURE_STORAGE
                     }
                 });
+                let carryGround;
+                for (flag in Memory.flags) {
+                    if (Game.flags[flag].name.includes("Upgrade")) {
+                        carryGround = Game.flags[flag];
+                    }
+                }
+                let upgradeContainer = carryGround.pos.lookFor(LOOK_STRUCTURES, {
+                    filter: (structure) => {
+                        return structure.structureType === STRUCTURE_STORAGE
+                    }
+                });
+
+                if(upgradeContainer.length){
+                    if (creep.transfer(upgradeContainer[0], RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                        creep.moveTo(upgradeContainer[0], {visualizePathStyle: {stroke: '#000000'}});
+                    }
+                }
+                // let container =
                 // console.log(storage);
                 if (creep.transfer(storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                     creep.moveTo(storage, {visualizePathStyle: {stroke: '#000000'}});

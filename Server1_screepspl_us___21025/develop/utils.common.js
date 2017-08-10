@@ -30,19 +30,19 @@ let utilCommon = {
             let isThereAConstructionSide = position.lookFor(LOOK_CONSTRUCTION_SITES)[0];
             // console.log("Is there a Road at pos "+position+" : "+ !isThereARoad);
             if (!isThereARoad && !isThereAConstructionSide) {
-            //     if (false) {
+                //     if (false) {
                 // let plannedRoadName = "PlannedRoadAtRoom:"+position.room.name+"X" + position.x +"Y"+position.y;
 
                 // console.log("Is Memory undefined? "+ (Memory.plannedRoads == undefined));
 
                 if (Memory.plannedRoads == undefined) {
-                        Memory.plannedRoads = [{pos: position, usability: 0}];
+                    Memory.plannedRoads = [{pos: position, usability: 0}];
                 } else {
                     for (let r = 0; r < Memory.plannedRoads.length; r++) {
 
                         // console.log("Is road at "+r+" === position? " + ( JSON.stringify(Memory.plannedRoads[r].pos) ===  JSON.stringify(position)));
 
-                        if (JSON.stringify(Memory.plannedRoads[r].pos) ===  JSON.stringify(position)){
+                        if (JSON.stringify(Memory.plannedRoads[r].pos) === JSON.stringify(position)) {
                             isUsed++;
                             // console.log("Is Used was Incremented!");
                             if (Memory.plannedRoads[r].usability < 6) {
@@ -51,7 +51,7 @@ let utilCommon = {
                             else {
                                 // console.log("Set Road at " + position);
                                 position.createConstructionSite(STRUCTURE_ROAD);
-                                Memory.plannedRoads.splice(r,1);
+                                Memory.plannedRoads.splice(r, 1);
                             }
                         }
                     }
@@ -98,15 +98,15 @@ let utilCommon = {
             } else
                 return [false, {}];
         } catch (e) {
-            console.log(e);
+            console.log(e.stack);
         }
-    }, setMiningSideAsUsed(flag){
-        Game.flags[flag].memory.usedBy = true;
+    }, setMiningSideAsUsed(name, flag){
+        Game.flags[flag].memory.usedBy = name;
     }, deleteMeOutOfMiningSide: function (flag) {
         try {
             delete Game.flags[flag].memory.usedBy;
         } catch (e) {
-            console.log(e);
+            console.log(e.stack);
         }
     },
     findCarryableMiningSide: function () {
@@ -137,10 +137,10 @@ let utilCommon = {
             } else
                 return [false, {}];
         } catch (e) {
-            console.log(e);
+            console.log(e.stack);
         }
-    }, setCarryableMiningSideAsUsed(flag){
-        Game.flags[flag].memory.carried = true;
+    }, setCarryableMiningSideAsUsed(name, flag){
+        Game.flags[flag].memory.carried = name;
 
     }, deleteMeOutOfCarryableSide: function (flag) {
         try {
@@ -179,6 +179,74 @@ let utilCommon = {
         } else {
             delete Memory.timeCount;
             return true;
+        }
+    },
+    notEnoughCarrier: function () {
+        let carryGround = [];
+        for (flag in Memory.flags) {
+            if (Game.flags[flag].name.includes("Mining")) {
+                carryGround.push(Game.flags[flag]);
+            }
+        }
+        let carrier = _.filter(Game.creeps, (creep) => creep.memory.role === 'carrier');
+        return carrier.length < carryGround.length;
+    },
+    checkForContainerAtMiningSide: function (flag) {
+        try {
+            // let miningFlag;
+            // // let container = miningflag.pos.lookFor(LOOK_STRUCTURES).filter(structure => {
+            // //     return structure.structureType === STRUCTURE_CONTAINER
+            // // })[0];
+            // for (flag in Memory.flags) {
+            //     if (Game.flags[flag].name.includes("Mining")) {
+            //         miningFlag = Game.flags[flag];
+            //     }
+            // }
+            let miningFlag = Game.flags[flag];
+            if (miningFlag != undefined) {
+                if (miningFlag) {
+                    let container = Game.flags[flag].pos.lookFor(LOOK_STRUCTURES).filter(structure => {
+                        return structure.structureType === STRUCTURE_CONTAINER
+                    })[0];
+                    if (container) {
+                        return true;
+                    } else {
+                        if (miningFlag.pos.lookFor(LOOK_CONSTRUCTION_SITES).length < 1) {
+                            console.log("Set construction Side")
+                            miningFlag.pos.createConstructionSite(STRUCTURE_CONTAINER);
+                            return false;
+                        } else
+                            return false;
+                    }
+
+                } else {
+                    return "Something wrong!";
+                }
+            } else return true;
+        } catch (e) {
+            console.log(e.stack);
+        }
+    }, checkForFalslyUsedFlag: function () {
+        try {
+            let name;
+            let miningFlags;
+
+            for (flag in Memory.flags) {
+                if (Game.flags[flag].name.includes("Mining")) {
+                    for (name in Memory.creeps) {
+                        if (!Game.creeps[name]) {
+                            if (name === Game.flags[flag].memory.usedBy) {
+                                delete Game.flags[flag].memory.usedBy;
+                            } else if (name === Game.flags[flag].memory.carried){
+                                delete Game.flags[flag].memory.carried;
+                            }
+                        }
+                    }
+                }
+            }
+
+        } catch (e) {
+            console.log(e.stack);
         }
     }
 };
